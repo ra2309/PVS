@@ -1,6 +1,7 @@
 
 from sample_players import DataPlayer
-
+import random
+import math
 
 class CustomPlayer(DataPlayer):
     """ Implement your own agent to play knight's Isolation
@@ -19,6 +20,32 @@ class CustomPlayer(DataPlayer):
       any pickleable object to the self.context attribute.
     **********************************************************************
     """
+    def pvt(self,state,depth,alpha,beta,color):
+        if depth <=0 or state.terminal_test():
+            return color*self.score(state)
+        explored = []
+        for a in state.actions():
+            if a not in explored:
+                explored.append(a)
+                score = self.pvt(state.result(a),depth-1,-beta,-alpha,-color)
+                score = -score
+            else:
+                score = self.pvt(state.result(a),depth-1,-alpha-1,-alpha,-color)
+                score = -score
+                if alpha<score and beta>score:
+                    score = self.pvt(state.result(a),depth-1,-beta,-score,-color)
+                    score = -score
+            if alpha<score:
+                alpha = score
+            if alpha>=beta:
+                break
+        return alpha
+    def score(self, state):
+        own_loc = state.locs[self.player_id]
+        opp_loc = state.locs[1 - self.player_id]
+        own_liberties = state.liberties(own_loc)
+        opp_liberties = state.liberties(opp_loc)
+        return len(own_liberties) - len(opp_liberties)     
     def get_action(self, state):
         """ Employ an adversarial search technique to choose an action
         available in the current state calls self.queue.put(ACTION) at least
@@ -42,5 +69,19 @@ class CustomPlayer(DataPlayer):
         # EXAMPLE: choose a random move without any search--this function MUST
         #          call self.queue.put(ACTION) at least once before time expires
         #          (the timer is automatically managed for you)
-        import random
-        self.queue.put(random.choice(state.actions()))
+        
+        
+        if state.ply_count < 2:
+            self.queue.put(random.choice(state.actions()))
+        else:
+            max_score = -math.inf
+            max_a = random.choice(state.actions())
+            for a in state.actions():
+                score = self.pvt(state,4,-math.inf,math.inf,1)
+                if score>max_score:
+                    max_score = score
+                    max_a = a
+            self.queue.put(a)
+        
+        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        

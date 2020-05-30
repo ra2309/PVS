@@ -1,2 +1,10 @@
 __pycache__/
 .ipynb_checkpoints
+.udacity-pa
+isolation
+tests
+jwt
+matches.log
+run_match.py
+sample_players.py
+setup.sh
