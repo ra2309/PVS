@@ -20,26 +20,49 @@ class CustomPlayer(DataPlayer):
       any pickleable object to the self.context attribute.
     **********************************************************************
     """
-    def pvt(self,state,depth,alpha,beta,color):
+    def pvs_min_max(self,state,depth,alpha,beta,color):
         if depth <=0 or state.terminal_test():
             return color*self.score(state)
         explored = []
+        
         for a in state.actions():
             if a not in explored:
                 explored.append(a)
-                score = self.pvt(state.result(a),depth-1,-beta,-alpha,-color)
-                score = -score
+                score = self.pvs_min_max(state.result(a),depth-1,alpha,beta,-color)
+                #score = -score
             else:
-                score = self.pvt(state.result(a),depth-1,-alpha-1,-alpha,-color)
-                score = -score
+                score = self.pvs_min_max(state.result(a),depth-1,alpha,alpha+1,-color)
+               # score = -score
                 if alpha<score and beta>score:
-                    score = self.pvt(state.result(a),depth-1,-beta,-score,-color)
-                    score = -score
+                    score = self.pvs_min_max(state.result(a),depth-1,alpha,beta,-color)
+                    #score = -score
             if alpha<score:
                 alpha = score
             if alpha>=beta:
                 break
         return alpha
+    def pvt(self,state,depth):
+        alpha = -math.inf
+        beta = math.inf
+        actions = state.actions()
+        if actions:
+            best_move = actions[0]
+        else:
+            best_move = None
+        maximizingplayer = 1
+        v = -math.inf
+        for i, action in enumerate(actions):
+            new_state = state.result(action)
+            if i==0:
+                v = max(v,self.pvs_min_max(new_state,depth-1,alpha,beta,maximizingplayer))
+            else:
+                v = max(v,self.pvs_min_max(new_state,depth-1,alpha,alpha+1,maximizingplayer))
+                if v>alpha:
+                    v = max(v,self.pvs_min_max(new_state,depth-1,alpha,beta,maximizingplayer))
+            if v>alpha:
+                alpha=v
+                best_move=action
+        return best_move
     def score(self, state):
         own_loc = state.locs[self.player_id]
         opp_loc = state.locs[1 - self.player_id]
@@ -74,13 +97,9 @@ class CustomPlayer(DataPlayer):
         if state.ply_count < 2:
             self.queue.put(random.choice(state.actions()))
         else:
-            max_score = -math.inf
-            max_a = random.choice(state.actions())
-            for a in state.actions():
-                score = self.pvt(state,4,-math.inf,math.inf,1)
-                if score>max_score:
-                    max_score = score
-                    max_a = a
+            
+            a = self.pvt(state,3)
+                
             self.queue.put(a)
         
         
